@@ -11,3 +11,4 @@ index 6103cc7..589a516 100644
    #include <sys/soundcard.h>
  #else
    #include <linux/soundcard.h>
+

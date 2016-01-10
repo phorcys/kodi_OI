@@ -73,3 +73,4 @@ index 1230c61..8ac299b 100644
    int result = ioctl (m_network->GetSocket(), SIOCGARP, (caddr_t) &areq);
  
    if (result != 0)
+

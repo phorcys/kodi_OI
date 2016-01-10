@@ -47,3 +47,4 @@ index 6f9500f..ba11ef1 100644
       return (NPT_Int32)timezone/60;
  #else
       return (NPT_Int32)tm_local.tm_gmtoff/60;
+

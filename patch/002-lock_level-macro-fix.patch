@@ -150,4 +150,5 @@ index ed62e42..93172a5 100644
 +    slValue = LOCK_LEVEL_::EXPERT;
    return slValue <= CProfilesManager::GetInstance().GetCurrentProfile().settingsLockLevel();
  }
+
  

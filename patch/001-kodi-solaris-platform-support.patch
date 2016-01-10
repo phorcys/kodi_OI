@@ -70,3 +70,4 @@ index 0b66a82..575b36f 100644
    *)
       AC_MSG_ERROR(unsupported build target: $host)
  esac
+

@@ -316,6 +316,7 @@ index ac5d9e1..bef5a56 100644
 +#endif
    swprintf(lpTimeZoneInformation->StandardName, 31, L"%s", tzname[0]);
    swprintf(lpTimeZoneInformation->DaylightName, 31, L"%s", tzname[1]);
+
 diff --git a/xbmc/peripherals/bus/linux/PeripheralBusUSBLibUSB.cpp b/xbmc/peripherals/bus/linux/PeripheralBusUSBLibUSB.cpp
 index 2658218..7a0453c 100644
 --- a/xbmc/peripherals/bus/linux/PeripheralBusUSBLibUSB.cpp
@@ -403,6 +404,7 @@ index 70b6ac0..516fcf8 100644
  #else
    clockid_t clock;
    if (pthread_getcpuclockid(m_ThreadId, &clock) == 0)   
+
 diff --git a/xbmc/windowing/WinEvents.cpp b/xbmc/windowing/WinEvents.cpp
 index 22fe2bc..6f6be20 100644
 --- a/xbmc/windowing/WinEvents.cpp
@@ -435,3 +437,4 @@ index 78ffe32..6819343 100644
  
  #endif // WINDOWING_FACTORY_H
  
+

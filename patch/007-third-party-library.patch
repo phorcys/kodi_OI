@@ -135,3 +135,4 @@ index cab9560..292bc4b 100644
  		`cat @abs_top_srcdir@/xbmc/cores/DllLoader/exports/wrapper.def` @abs_top_srcdir@/xbmc/cores/DllLoader/exports/wrapper.o
  endif
  
+
