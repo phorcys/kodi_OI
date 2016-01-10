@@ -1,6 +1,6 @@
 #!/bin/sh
 sudo pkg set-publisher -O http://pkg.openindiana.org/hipster-encumbered hipster-encumbered 
-sudo pkg install  build-essential  doxygen boost nasm  mariadb-55 fribidi libass libmpeg2 libdca microhttpd libpthread-stubs mesa glu glw libsmbclient video/ffmpeg gperf libdvdread libsmbclient system/header/header-audio
+sudo pkg install  build-essential  doxygen boost nasm  mariadb-55 fribidi libass libmpeg2 libdca libmicrohttpd libpthread-stubs mesa glu glw libsmbclient video/ffmpeg gperf libdvdread libsmbclient system/header/header-audio
 
 sudo cp depends_patch/smbclient.pc /usr/local/lib/pkgconfig/
 
