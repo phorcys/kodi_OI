@@ -1,0 +1,72 @@
+diff --git a/configure.ac b/configure.ac
+index 4e125e5..5acad25 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -62,6 +62,20 @@ AC_DEFUN([XB_FIND_SONAME],
+     if test x$$1_SONAME != x ; then
+       $1_SONAME=[`basename $$1_SONAME`]
+     fi
++  elif echo "$host" | grep -q solaris; then
++    AC_MSG_CHECKING([for lib$2 soname solaris])
++    gcc_lib_path=[`$CC -print-search-dirs 2>/dev/null | fgrep libraries: | sed 's/[^=]*=\(.*\)/\1/' | sed 's/:/ /g'`]
++    env_lib_path=[`echo $LDFLAGS | sed 's/-L[ ]*//g'`]
++      host_lib_path="/usr/lib /usr/local/lib"
++    for path in $gcc_lib_path $env_lib_path $host_lib_path; do
++      if [[ -d $path ]]; then
++        for $1_FILENAME in `ls ${path}| grep -e  "lib$2.so.*"`; do
++          if [[ ! -z $path/$$1_FILENAME ]]; then
++              $1_SONAME=$($OBJDUMP -p $path/$$1_FILENAME | grep "SONAME.*$2" | awk '{V=2; print $V}')
++          fi
++        done
++      fi
++    done
+   elif [[ "$host_vendor" != "apple" ]]; then
+     AC_MSG_CHECKING([for lib$2 soname])
+     $1_FILENAME=$($CC -nostdlib -o /dev/null $CFLAGS $LDFLAGS $4 -l$2 -Wl,-M 2>/dev/null | grep "^LOAD.*$2" | awk '{V=2; print $V}')
+@@ -680,6 +694,16 @@ case $host in
+      use_wayland=no
+      USE_STATIC_FFMPEG=1
+      ;;
++  i386-*-solaris*)
++     target_platform=target_linux
++     ARCH="x86-solaris"
++     MAKE="gmake"
++     ;;
++  amd64-*-solaris*)
++     target_platform=target_linux
++     ARCH="x86_64-solaris"
++     MAKE="gmake"
++     ;;
+   *)
+      AC_MSG_ERROR(unsupported host ($host))
+ esac
+diff --git a/m4/xbmc_arch.m4 b/m4/xbmc_arch.m4
+index 0b66a82..575b36f 100644
+--- a/m4/xbmc_arch.m4
++++ b/m4/xbmc_arch.m4
+@@ -26,6 +26,12 @@ case $build in
+   arm*-*-linux-gnu*|arm*-*-linux-uclibc*)
+      AC_SUBST(NATIVE_ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX")
+      ;;
++  i386-*-solaris*)
++     AC_SUBST(NATIVE_ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_SOLARIS -D_LINUX")
++     ;;
++  amd64-*-solaris*)
++     AC_SUBST(NATIVE_ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_SOLARIS -D_LINUX")
++     ;;
+   *)
+      AC_MSG_ERROR(unsupported native build platform: $build)
+ esac
+@@ -69,6 +75,12 @@ case $host in
+   *-*linux-android*)
+      AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_LINUX -D_LINUX -DTARGET_ANDROID")
+      ;;
++  i386-*-solaris*)
++     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_SOLARIS -D_LINUX")
++     ;;
++  amd64-*-solaris*)
++     AC_SUBST(ARCH_DEFINES, "-DTARGET_POSIX -DTARGET_SOLARIS -D_LINUX")
++     ;;
+   *)
+      AC_MSG_ERROR(unsupported build target: $host)
+ esac

@@ -1,0 +1,437 @@
+diff --git a/xbmc/cores/DllLoader/exports/emu_msvcrt.cpp b/xbmc/cores/DllLoader/exports/emu_msvcrt.cpp
+index 367ae2c..bb52053 100644
+--- a/xbmc/cores/DllLoader/exports/emu_msvcrt.cpp
++++ b/xbmc/cores/DllLoader/exports/emu_msvcrt.cpp
+@@ -27,7 +27,7 @@
+ #include <direct.h>
+ #include <process.h>
+ #else
+-#if !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD)
++#if !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD) && !defined(TARGET_SOLARIS)
+ #include <mntent.h>
+ #endif
+ #endif
+@@ -42,7 +42,7 @@
+     #include <sys/ioctl.h>
+     #if defined(TARGET_DARWIN)
+       #include <IOKit/storage/IODVDMediaBSDClient.h>
+-    #elif !defined(TARGET_FREEBSD)
++    #elif !defined(TARGET_FREEBSD) && !defined(TARGET_SOLARIS)
+       #include <linux/cdrom.h>
+     #endif
+   #endif
+@@ -1631,7 +1631,7 @@ extern "C"
+     int ret;
+ 
+     ret = dll_fgetpos64(stream, &tmpPos);
+-#if !defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
++#if defined(TARGET_SOLARIS)||!defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
+     *pos = (fpos_t)tmpPos;
+ #else
+     pos->__pos = (off_t)tmpPos.__pos;
+@@ -1644,7 +1644,7 @@ extern "C"
+     CFile* pFile = g_emuFileWrapper.GetFileXbmcByStream(stream);
+     if (pFile != NULL)
+     {
+-#if !defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
++#if defined(TARGET_SOLARIS)||!defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
+       *pos = pFile->GetPosition();
+ #else
+       pos->__pos = pFile->GetPosition();
+@@ -1666,7 +1666,7 @@ extern "C"
+     int fd = g_emuFileWrapper.GetDescriptorByStream(stream);
+     if (fd >= 0)
+     {
+-#if !defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
++#if defined(TARGET_SOLARIS)||!defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
+       if (dll_lseeki64(fd, *pos, SEEK_SET) >= 0)
+ #else
+       if (dll_lseeki64(fd, (__off64_t)pos->__pos, SEEK_SET) >= 0)
+@@ -1699,7 +1699,7 @@ extern "C"
+     if (fd >= 0)
+     {
+       fpos64_t tmpPos;
+-#if !defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
++#if defined(TARGET_SOLARIS)||!defined(TARGET_POSIX) || defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
+       tmpPos= *pos;
+ #else
+       tmpPos.__pos = (off64_t)(pos->__pos);
+@@ -2172,7 +2172,7 @@ extern "C"
+      if (!pFile)
+        return -1;
+ 
+-#if defined(HAS_DVD_DRIVE) && !defined(TARGET_FREEBSD)
++#if defined(HAS_DVD_DRIVE) && !defined(TARGET_FREEBSD) && !defined(TARGET_SOLARIS)
+ #if !defined(TARGET_DARWIN)
+     if(request == DVD_READ_STRUCT || request == DVD_AUTH)
+ #else
+diff --git a/xbmc/cores/DllLoader/exports/emu_msvcrt.h b/xbmc/cores/DllLoader/exports/emu_msvcrt.h
+index de4c70d..34dd589 100644
+--- a/xbmc/cores/DllLoader/exports/emu_msvcrt.h
++++ b/xbmc/cores/DllLoader/exports/emu_msvcrt.h
+@@ -26,7 +26,7 @@
+ #define _onexit_t void*
+ #endif
+ 
+-#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
++#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID) || defined(TARGET_SOLARIS)
+ typedef off_t __off_t;
+ typedef int64_t off64_t;
+ typedef off64_t __off64_t;
+diff --git a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp
+index cf8a060..4f333bf 100644
+--- a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp
++++ b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp
+@@ -31,7 +31,11 @@ CEmuFileWrapper::CEmuFileWrapper()
+   {
+     memset(&m_files[i], 0, sizeof(EmuFileObject));
+     m_files[i].used = false;
+-    m_files[i].file_emu._file = -1;
++#if defined(TARGET_SOLARIS)
++      close(fileno(&m_files[i].file_emu));
++#else
++	m_files[i].file_emu._file = -1;
++#endif
+   }
+ }
+ 
+@@ -56,7 +60,11 @@ void CEmuFileWrapper::CleanUp()
+       }
+       memset(&m_files[i], 0, sizeof(EmuFileObject));
+       m_files[i].used = false;
+-      m_files[i].file_emu._file = -1;
++#if defined(TARGET_SOLARIS)
++      close(fileno(&m_files[i].file_emu));
++#else
++        m_files[i].file_emu._file = -1;
++#endif
+     }
+   }
+ }
+@@ -75,7 +83,7 @@ EmuFileObject* CEmuFileWrapper::RegisterFileObject(XFILE::CFile* pFile)
+       object = &m_files[i];
+       object->used = true;
+       object->file_xbmc = pFile;
+-      object->file_emu._file = (i + FILE_WRAPPER_OFFSET);
++      //object->file_emu._file = (i + FILE_WRAPPER_OFFSET);
+       object->file_lock = new CCriticalSection();
+       break;
+     }
+@@ -103,7 +111,11 @@ void CEmuFileWrapper::UnRegisterFileObjectByDescriptor(int fd)
+         }
+         memset(&m_files[i], 0, sizeof(EmuFileObject));
+         m_files[i].used = false;
++#if defined(TARGET_SOLARIS)
++      close(fileno(&m_files[i].file_emu));
++#else
+         m_files[i].file_emu._file = -1;
++#endif
+       }
+     }
+   }
+@@ -113,7 +125,7 @@ void CEmuFileWrapper::UnRegisterFileObjectByStream(FILE* stream)
+ {
+   if (stream != NULL)
+   {
+-    return UnRegisterFileObjectByDescriptor(stream->_file);
++    return UnRegisterFileObjectByDescriptor(fileno(stream));
+   }
+ }
+ 
+@@ -171,7 +183,7 @@ EmuFileObject* CEmuFileWrapper::GetFileObjectByStream(FILE* stream)
+ {
+   if (stream != NULL)
+   {
+-    return GetFileObjectByDescriptor(stream->_file);
++    return GetFileObjectByDescriptor(fileno(stream));
+   }
+ 
+   return NULL;
+@@ -191,7 +203,7 @@ XFILE::CFile* CEmuFileWrapper::GetFileXbmcByStream(FILE* stream)
+ {
+   if (stream != NULL)
+   {
+-    EmuFileObject* object = GetFileObjectByDescriptor(stream->_file);
++    EmuFileObject* object = GetFileObjectByDescriptor(fileno(stream));
+     if (object != NULL && object->used)
+     {
+       return object->file_xbmc;
+@@ -204,10 +216,10 @@ int CEmuFileWrapper::GetDescriptorByStream(FILE* stream)
+ {
+   if (stream != NULL)
+   {
+-    int i = stream->_file - FILE_WRAPPER_OFFSET;
++    int i = fileno(stream) - FILE_WRAPPER_OFFSET;
+     if (i >= 0 && i < MAX_EMULATED_FILES)
+     {
+-      return stream->_file;
++      return fileno(stream);
+     }
+   }
+   return -1;
+@@ -237,7 +249,7 @@ bool CEmuFileWrapper::StreamIsEmulatedFile(FILE* stream)
+ {
+   if (stream != NULL)
+   {
+-    return DescriptorIsEmulatedFile(stream->_file);
++    return DescriptorIsEmulatedFile(fileno(stream));
+   }
+   return false;
+ }
+diff --git a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h
+index 3d79c7a..b8146fd 100644
+--- a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h
++++ b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h
+@@ -27,7 +27,7 @@
+ #include "system.h"
+ #include "threads/CriticalSection.h"
+ 
+-#if defined(TARGET_POSIX) && !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD) && !defined(TARGET_ANDROID) && !defined(__UCLIBC__)
++#if defined(TARGET_POSIX) && !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD) && !defined(TARGET_ANDROID) && !defined(__UCLIBC__)&&   !defined(TARGET_SOLARIS)
+ #define _file _fileno
+ #elif defined(__UCLIBC__)
+ #define _file __filedes
+diff --git a/xbmc/cores/DllLoader/exports/wrapper.c b/xbmc/cores/DllLoader/exports/wrapper.c
+index e363662..183e7f6 100644
+--- a/xbmc/cores/DllLoader/exports/wrapper.c
++++ b/xbmc/cores/DllLoader/exports/wrapper.c
+@@ -39,13 +39,13 @@
+ #endif
+ #include <dlfcn.h>
+ 
+-#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID)
++#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_ANDROID) || defined(TARGET_SOLARIS)
+ typedef off_t     __off_t;
+ typedef int64_t   off64_t;
+ typedef off64_t   __off64_t;
+ typedef fpos_t    fpos64_t;
+ #define stat64    stat
+-#if defined(TARGET_DARWIN) || defined(TARGET_ANDROID)
++#if defined(TARGET_DARWIN) || defined(TARGET_ANDROID) || defined(TARGET_SOLARIS)
+ #define _G_va_list va_list
+ #endif
+ #endif
+diff --git a/xbmc/filesystem/posix/PosixDirectory.cpp b/xbmc/filesystem/posix/PosixDirectory.cpp
+index 9798617..b442d35 100644
+--- a/xbmc/filesystem/posix/PosixDirectory.cpp
++++ b/xbmc/filesystem/posix/PosixDirectory.cpp
+@@ -69,13 +69,19 @@ bool CPosixDirectory::GetDirectory(const CURL& url, CFileItemList &items)
+     // is not equal to the (correct) stat() obtained one. In this case the file type
+     // could not be determined and the value of dirent.d_type is set to DT_UNKNOWN.
+     // In order to get a correct value we have to incur the cost of calling stat.
++#if defined(TARGET_SOLARIS)
++struct stat s; /*include sys/stat.h if necessary */
++stat(entry->d_name, &s);
++if (S_ISLNK(s.st_mode))
++#else
+     if (entry->d_type == DT_UNKNOWN || entry->d_type == DT_LNK)
++#endif
+     {
+       if (stat(itemPath.c_str(), &buffer) == 0)
+         bStat = true;
+     }
+ 
+-    if (entry->d_type == DT_DIR || (bStat && S_ISDIR(buffer.st_mode)))
++    if (bStat && S_ISDIR(buffer.st_mode))
+     {
+       pItem->m_bIsFolder = true;
+       URIUtils::AddSlashAtEnd(itemPath);
+diff --git a/xbmc/guilib/TextureBundleXPR.cpp b/xbmc/guilib/TextureBundleXPR.cpp
+index 4583687..2409da1 100644
+--- a/xbmc/guilib/TextureBundleXPR.cpp
++++ b/xbmc/guilib/TextureBundleXPR.cpp
+@@ -288,7 +288,7 @@ bool CTextureBundleXPR::LoadFile(const std::string& Filename, CAutoTexBuffer& Un
+     GlobalMemoryStatusEx(&stat);
+     CLog::Log(LOGERROR, "Out of memory loading texture: %s (need %lu bytes, have %" PRIu64" bytes)", name.c_str(),
+               file->second.UnpackedSize + file->second.PackedSize, stat.ullAvailPhys);
+-#elif defined(TARGET_DARWIN) || defined(TARGET_FREEBSD)
++#elif defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+     CLog::Log(LOGERROR, "Out of memory loading texture: %s (need %d bytes)", name.c_str(),
+               file->second.UnpackedSize + file->second.PackedSize);
+ #else
+diff --git a/xbmc/linux/PlatformDefs.h b/xbmc/linux/PlatformDefs.h
+index 4350075..fd4c333 100644
+--- a/xbmc/linux/PlatformDefs.h
++++ b/xbmc/linux/PlatformDefs.h
+@@ -415,6 +415,10 @@ typedef struct _SECURITY_ATTRIBUTES {
+ #define FILE_CURRENT            1
+ #define FILE_END                2
+ 
++#ifndef PATH_MAX
++#define PATH_MAX 1024
++#endif
++
+ #define _S_IFREG  S_IFREG
+ #define _S_IFDIR  S_IFDIR
+ #define MAX_PATH PATH_MAX
+diff --git a/xbmc/linux/XFileUtils.cpp b/xbmc/linux/XFileUtils.cpp
+index ac5d9e1..bef5a56 100644
+--- a/xbmc/linux/XFileUtils.cpp
++++ b/xbmc/linux/XFileUtils.cpp
+@@ -38,7 +38,7 @@
+ #include <dirent.h>
+ #include <errno.h>
+ 
+-#if defined(TARGET_ANDROID)
++#if defined(TARGET_ANDROID) || defined(TARGET_SOLARIS)
+ #include <sys/file.h>
+ #include <sys/statfs.h>
+ 
+@@ -598,10 +598,10 @@ BOOL GetDiskFreeSpaceEx(
+   )
+ 
+ {
+-#if defined(TARGET_ANDROID) || defined(TARGET_DARWIN)
++#if defined(TARGET_ANDROID) || defined(TARGET_DARWIN) || defined(TARGET_SOLARIS)
+   struct statfs fsInfo;
+   // is 64-bit on android and darwin (10.6SDK + any iOS)
+-  if (statfs(CSpecialProtocol::TranslatePath(lpDirectoryName).c_str(), &fsInfo) != 0)
++  if (statfs(CSpecialProtocol::TranslatePath(lpDirectoryName).c_str(), &fsInfo,0,0) != 0)
+     return false;
+ #else
+   struct statfs64 fsInfo;
+@@ -609,9 +609,13 @@ BOOL GetDiskFreeSpaceEx(
+     return false;
+ #endif
+ 
++#if defined(TARGET_SOLARIS)
++  if (lpFreeBytesAvailable)
++    lpFreeBytesAvailable->QuadPart =  (ULONGLONG)fsInfo.f_bfree * (ULONGLONG)fsInfo.f_bsize;
++#else
+   if (lpFreeBytesAvailable)
+     lpFreeBytesAvailable->QuadPart =  (ULONGLONG)fsInfo.f_bavail * (ULONGLONG)fsInfo.f_bsize;
+-
++#endif
+   if (lpTotalNumberOfBytes)
+     lpTotalNumberOfBytes->QuadPart = (ULONGLONG)fsInfo.f_blocks * (ULONGLONG)fsInfo.f_bsize;
+ 
+@@ -630,9 +634,10 @@ DWORD GetTimeZoneInformation( LPTIME_ZONE_INFORMATION lpTimeZoneInformation )
+ 
+   struct tm t;
+   time_t tt = time(NULL);
++#if !defined(TARGET_SOLARIS)
+   if(localtime_r(&tt, &t))
+     lpTimeZoneInformation->Bias = -t.tm_gmtoff / 60;
+-
++#endif
+   swprintf(lpTimeZoneInformation->StandardName, 31, L"%s", tzname[0]);
+   swprintf(lpTimeZoneInformation->DaylightName, 31, L"%s", tzname[1]);
+diff --git a/xbmc/peripherals/bus/linux/PeripheralBusUSBLibUSB.cpp b/xbmc/peripherals/bus/linux/PeripheralBusUSBLibUSB.cpp
+index 2658218..7a0453c 100644
+--- a/xbmc/peripherals/bus/linux/PeripheralBusUSBLibUSB.cpp
++++ b/xbmc/peripherals/bus/linux/PeripheralBusUSBLibUSB.cpp
+@@ -78,7 +78,7 @@ const PeripheralType CPeripheralBusUSB::GetType(int iDeviceClass)
+   case USB_CLASS_PER_INTERFACE:
+   case USB_CLASS_AUDIO:
+   case USB_CLASS_PRINTER:
+-  case USB_CLASS_PTP:
++  //case USB_CLASS_PTP:
+   case USB_CLASS_HUB:
+   case USB_CLASS_DATA:
+   case USB_CLASS_VENDOR_SPEC:
+diff --git a/xbmc/storage/DetectDVDType.cpp b/xbmc/storage/DetectDVDType.cpp
+index 99e3b63..7fce8e6 100644
+--- a/xbmc/storage/DetectDVDType.cpp
++++ b/xbmc/storage/DetectDVDType.cpp
+@@ -34,7 +34,7 @@
+ #include <sys/types.h>
+ #include <sys/ioctl.h>
+ #include <fcntl.h>
+-#if !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD)
++#if !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD) && !defined(TARGET_SOLARIS)
+ #include <linux/cdrom.h>
+ #endif
+ #endif
+diff --git a/xbmc/system.h b/xbmc/system.h
+index 5225518..be19667 100644
+--- a/xbmc/system.h
++++ b/xbmc/system.h
+@@ -150,7 +150,7 @@
+  * Linux Specific
+  *****************/
+ 
+-#if defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
++#if defined(TARGET_LINUX) || defined(TARGET_FREEBSD) ||defined(TARGET_SOLARIS)
+ #if defined(HAVE_LIBAVAHI_COMMON) && defined(HAVE_LIBAVAHI_CLIENT)
+ #define HAS_ZEROCONF
+ #define HAS_AVAHI
+diff --git a/xbmc/system_gl.h b/xbmc/system_gl.h
+index efc709a..986424a 100644
+--- a/xbmc/system_gl.h
++++ b/xbmc/system_gl.h
+@@ -42,6 +42,10 @@
+     #include <GL/glew.h>
+     #include <OpenGL/gl.h>
+     #include <OpenGL/glext.h>
++  #elif defined(TARGET_SOLARIS)
++    #include <GL/glew.h>
++    #include <GL/gl.h>
++    #include <GL/glext.h>
+   #endif
+ #elif HAS_GLES == 2
+   #if defined(TARGET_DARWIN)
+diff --git a/xbmc/threads/platform/pthreads/ThreadImpl.cpp b/xbmc/threads/platform/pthreads/ThreadImpl.cpp
+index 70b6ac0..516fcf8 100644
+--- a/xbmc/threads/platform/pthreads/ThreadImpl.cpp
++++ b/xbmc/threads/platform/pthreads/ThreadImpl.cpp
+@@ -35,6 +35,9 @@
+ #include <pthread_np.h>
+ #endif
+ #endif
++#if defined(TARGET_SOLARIS)
++#include <thread.h>
++#endif
+ 
+ #include <signal.h>
+ 
+@@ -68,6 +71,8 @@ void CThread::SetThreadInfo()
+ #endif
+ #elif defined(TARGET_ANDROID)
+   m_ThreadOpaque.LwpId = gettid();
++#elif defined(TARGET_SOLARIS)
++  m_ThreadOpaque.LwpId = thr_self();
+ #else
+   m_ThreadOpaque.LwpId = syscall(SYS_gettid);
+ #endif
+@@ -243,7 +248,8 @@ int64_t CThread::GetAbsoluteUsage()
+     // System time.
+     time += (((int64_t)threadInfo.system_time.seconds * 10000000L) + threadInfo.system_time.microseconds*10L);
+   }
+-
++#elif defined(TARGET_SOLARIS)
++ time =0;
+ #else
+   clockid_t clock;
+   if (pthread_getcpuclockid(m_ThreadId, &clock) == 0)   
+diff --git a/xbmc/windowing/WinEvents.cpp b/xbmc/windowing/WinEvents.cpp
+index 22fe2bc..6f6be20 100644
+--- a/xbmc/windowing/WinEvents.cpp
++++ b/xbmc/windowing/WinEvents.cpp
+@@ -38,11 +38,11 @@
+ #include "android/WinEventsAndroid.h"
+ #define WinEventsType CWinEventsAndroid
+ 
+-#elif (defined(TARGET_FREEBSD) || defined(TARGET_LINUX)) && defined(HAS_SDL_WIN_EVENTS)
++#elif (defined(TARGET_FREEBSD) || defined(TARGET_LINUX)) || defined(TARGET_SOLARIS) && defined(HAS_SDL_WIN_EVENTS)
+ #include "WinEventsSDL.h"
+ #define WinEventsType CWinEventsSDL
+ 
+-#elif (defined(TARGET_FREEBSD) || defined(TARGET_LINUX)) && defined(HAS_X11_WIN_EVENTS)
++#elif (defined(TARGET_FREEBSD) || defined(TARGET_LINUX)) || defined(TARGET_SOLARIS) && defined(HAS_X11_WIN_EVENTS)
+ #include "WinEventsX11.h"
+ #define WinEventsType CWinEventsX11
+ 
+diff --git a/xbmc/windowing/WindowingFactory.h b/xbmc/windowing/WindowingFactory.h
+index 78ffe32..6819343 100644
+--- a/xbmc/windowing/WindowingFactory.h
++++ b/xbmc/windowing/WindowingFactory.h
+@@ -50,6 +50,8 @@
+ #elif defined(TARGET_DARWIN_IOS)
+ #include "osx/WinSystemIOS.h"
+ 
++#elif defined(TARGET_SOLARIS)   && defined(HAS_GL)   && defined(HAVE_X11)
++#include "X11/WinSystemX11GL.h"
+ #endif
+ 
+ #endif // WINDOWING_FACTORY_H
+ 

@@ -1,0 +1,137 @@
+diff --git a/lib/UnrarXLib/os.hpp b/lib/UnrarXLib/os.hpp
+index e7abcdc..3a52409 100644
+--- a/lib/UnrarXLib/os.hpp
++++ b/lib/UnrarXLib/os.hpp
+@@ -207,7 +207,9 @@
+ #endif
+ 
+ #endif
+-
++#if defined(TARGET_SOLARIS)
++#define LITTLE_ENDIAN
++#endif
+ typedef const char* MSGID;
+ 
+ #define safebuf static
+diff --git a/lib/cximage-6.0/CxImage/ximage.h b/lib/cximage-6.0/CxImage/ximage.h
+index 26341d9..3453d3c 100644
+--- a/lib/cximage-6.0/CxImage/ximage.h
++++ b/lib/cximage-6.0/CxImage/ximage.h
+@@ -53,7 +53,7 @@
+ #endif 
+ 
+ #ifdef _LINUX
+-#define _XOPEN_SOURCE
++#define _XOPEN_SOURCE 600
+ #include <unistd.h>
+ #include <arpa/inet.h>
+ #endif
+diff --git a/lib/cximage-6.0/Makefile.in b/lib/cximage-6.0/Makefile.in
+index 7f63e32..3bd17c3 100644
+--- a/lib/cximage-6.0/Makefile.in
++++ b/lib/cximage-6.0/Makefile.in
+@@ -21,7 +21,7 @@ ifeq ($(findstring osx,$(ARCH)), osx)
+ 		CxImage/*.o jasper/*/*.o jbig/*.o raw/*.o
+ else
+ 	$(CXX) $(CFLAGS) $(LDFLAGS) -shared -o $(SLIB) -Wl,--whole-archive $(SLIBS) \
+-		-Wl,--no-whole-archive -lpng -ljasper -ljpeg -ltiff -lz -Wl,--unresolved-symbols=ignore-all
++		-Wl,--no-whole-archive -lpng -ljasper -ljpeg -ltiff -lz 
+ endif
+ 
+ $(SLIBS): compile 
+diff --git a/lib/libdvd/Makefile.in b/lib/libdvd/Makefile.in
+index 54387cc..363c943 100644
+--- a/lib/libdvd/Makefile.in
++++ b/lib/libdvd/Makefile.in
+@@ -45,23 +45,22 @@ all: $(SLIB)
+ ifeq ($(findstring osx,$(ARCH)), osx)
+ 
+ $(SYSDIR)/libdvdcss-$(ARCH).so:  $($(WRAPPER)) libdvdcss/.libs/libdvdcss.a
+-	$(CC) $(LDFLAGS) -Wl,-alias_list,$(WRAPPER_MACH_ALIAS) -o $@ \
++	$(CC) $(LDFLAGS) -alias_list,$(WRAPPER_MACH_ALIAS) -o $@ \
+ 		$(WRAPPER) libdvdcss/src/*.o $(BUNDLE1_O)
+ 
+ $(SYSDIR)/libdvdnav-$(ARCH).so: $($(WRAPPER)) $(DVDCSS_A) libdvdread/obj/libdvdread.a libdvdnav/obj/libdvdnav.a
+-	$(CC) $(LDFLAGS) -Wl,-alias_list,$(WRAPPER_MACH_ALIAS) -o $@ \
++	$(CC) $(LDFLAGS) -alias_list,$(WRAPPER_MACH_ALIAS) -o $@ \
+ 		$(WRAPPER) $(DVDCSS_O) libdvdread/obj/*.o libdvdnav/obj/*.o $(BUNDLE1_O)
+ 
+ else
+ 
+ $(SYSDIR)/libdvdcss-$(ARCH).so: $(WRAPPER) libdvdcss/.libs/libdvdcss.a
+-	$(CC) -o $@ $(LDFLAGS) -Wl,--soname,$@ \
+-		libdvdcss/src/*.o -Wl,--unresolved-symbols=ignore-all -lm \
++	$(CC) -o $@ $(LDFLAGS) \
++		libdvdcss/src/*.o -lm \
+ 		`cat $(WRAPPER:.o=.def)` $(WRAPPER)
+ 
+ $(SYSDIR)/libdvdnav-$(ARCH).so: $(WRAPPER) $(DVDCSS_A) libdvdread/obj/libdvdread.a libdvdnav/obj/libdvdnav.a
+-	$(CC) -o $@ $(LDFLAGS) -Wl,--soname,$@ $(DVDCSS_O) libdvdread/obj/*.o libdvdnav/obj/*.o -lm \
+-		-Wl,--unresolved-symbols=ignore-all \
++	$(CC) -o $@ $(LDFLAGS)  $(DVDCSS_O) libdvdread/obj/*.o libdvdnav/obj/*.o -lm \
+ 		`cat $(WRAPPER:.o=.def)` $(WRAPPER)
+ 
+ endif
+diff --git a/lib/libdvd/libdvdcss/configure.ac b/lib/libdvd/libdvdcss/configure.ac
+index 6028af8..798967a 100644
+--- a/lib/libdvd/libdvdcss/configure.ac
++++ b/lib/libdvd/libdvdcss/configure.ac
+@@ -117,6 +117,9 @@ case x"${host_os}" in
+   x*mingw* | *wince* | *mingwce*)
+     AC_DEFINE([_WIN32_IE], 0x0401, [Define to '0x0401' for IE 4.01 (and shell) APIs.])
+     ;;
++  x*solaris*)
++    CFLAGS="${CFLAGS} -DTARGET_SOLARIS"
++    ;;
+   x*)
+     ;;
+ esac
+diff --git a/lib/libdvd/libdvdcss/src/ioctl.c b/lib/libdvd/libdvdcss/src/ioctl.c
+index 61a924e..1462e05 100644
+--- a/lib/libdvd/libdvdcss/src/ioctl.c
++++ b/lib/libdvd/libdvdcss/src/ioctl.c
+@@ -71,7 +71,7 @@
+ #ifdef HPUX_SCTL_IO
+ #   include <sys/scsi.h>
+ #endif
+-#ifdef SOLARIS_USCSI
++#if defined(SOLARIS_USCSI) || defined(TARGET_SOLARIS)
+ #   include <dlfcn.h>
+ #   include <unistd.h>
+ #   include <stropts.h>
+@@ -107,7 +107,7 @@ static void HPUXInitSCTL ( struct sctl_io *sctl_io, int i_type );
+ /*****************************************************************************
+  * Local prototypes, Solaris specific
+  *****************************************************************************/
+-#if defined( SOLARIS_USCSI )
++#if defined( SOLARIS_USCSI )|| defined(TARGET_SOLARIS)
+ static void SolarisInitUSCSI( struct uscsi_cmd *p_sc, int i_type );
+ static int SolarisSendUSCSI( int fd, struct uscsi_cmd *p_sc );
+ #endif
+diff --git a/lib/libdvd/libdvdcss/src/ioctl.h b/lib/libdvd/libdvdcss/src/ioctl.h
+index 8533833..c60faf6 100644
+--- a/lib/libdvd/libdvdcss/src/ioctl.h
++++ b/lib/libdvd/libdvdcss/src/ioctl.h
+@@ -66,6 +66,9 @@ int ioctl_ReportRPC         ( int, int *, int *, int * );
+ /*****************************************************************************
+  * Common macro, Solaris specific
+  *****************************************************************************/
++#if defined(TARGET_SOLARIS)
++#define SOLARIS_USCSI
++#endif
+ #if defined( SOLARIS_USCSI )
+ #define USCSI_TIMEOUT( SC, TO ) ( (SC)->uscsi_timeout = (TO) )
+ #define USCSI_RESID( SC )       ( (SC)->uscsi_resid )
+diff --git a/lib/libexif/Makefile.in b/lib/libexif/Makefile.in
+index cab9560..292bc4b 100644
+--- a/lib/libexif/Makefile.in
++++ b/lib/libexif/Makefile.in
+@@ -14,7 +14,7 @@ ifeq ($(findstring osx,$(ARCH)), osx)
+ 		-bundle -undefined dynamic_lookup -read_only_relocs suppress -o $@ \
+ 		@abs_top_srcdir@/xbmc/cores/DllLoader/exports/wrapper.o $(OBJS)
+ else
+-	$(CXX) $(CXXFLAGS) $(LDFLAGS) -shared -o $@ $(OBJS) -Wl,--unresolved-symbols=ignore-all \
++	$(CXX) $(CXXFLAGS) $(LDFLAGS) -shared -o $@ $(OBJS) \
+ 		`cat @abs_top_srcdir@/xbmc/cores/DllLoader/exports/wrapper.def` @abs_top_srcdir@/xbmc/cores/DllLoader/exports/wrapper.o
+ endif
+ 

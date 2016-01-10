@@ -1,0 +1,65 @@
+diff --git a/xbmc/linux/XMemUtils.cpp b/xbmc/linux/XMemUtils.cpp
+index feb7191..05918b7 100644
+--- a/xbmc/linux/XMemUtils.cpp
++++ b/xbmc/linux/XMemUtils.cpp
+@@ -139,6 +139,8 @@ void GlobalMemoryStatusEx(LPMEMORYSTATUSEX lpBuffer)
+ 
+   if (sysctlbyname("vm.stats.vm.v_swappgsout", &swap_free, &len, NULL, 0) == 0)
+     lpBuffer->ullAvailPageFile = swap_free * pagesize;
++#elif defined(TARGET_SOLARIS)
++//nn
+ #else
+   struct sysinfo info;
+   char name[32];
+diff --git a/xbmc/linux/XTimeUtils.cpp b/xbmc/linux/XTimeUtils.cpp
+index bcdc5ce..d711e4f 100644
+--- a/xbmc/linux/XTimeUtils.cpp
++++ b/xbmc/linux/XTimeUtils.cpp
+@@ -87,9 +87,9 @@ BOOL FileTimeToLocalFileTime(const FILETIME* lpFileTime, LPFILETIME lpLocalFileT
+   struct tm tm_ft;
+   FileTimeToTimeT(lpFileTime, &ft);
+   localtime_r(&ft, &tm_ft);
+-
++#if !defined(TARGET_SOLARIS)
+   l.QuadPart += (ULONGLONG)tm_ft.tm_gmtoff * 10000000;
+-
++#endif
+   lpLocalFileTime->dwLowDateTime = l.u.LowPart;
+   lpLocalFileTime->dwHighDateTime = l.u.HighPart;
+   return true;
+diff --git a/xbmc/storage/IoSupport.cpp b/xbmc/storage/IoSupport.cpp
+index ca8debd..ef12b73 100644
+--- a/xbmc/storage/IoSupport.cpp
++++ b/xbmc/storage/IoSupport.cpp
+@@ -206,6 +206,8 @@ INT CIoSupport::ReadSectorMode2(HANDLE hDevice, DWORD dwSector, LPSTR lpczBuffer
+   return MODE2_DATA_SIZE;
+ #elif defined(TARGET_FREEBSD)
+   // NYI
++#elif defined(TARGET_SOLARIS)
++ //NYI
+ #elif defined(TARGET_POSIX)
+   if (hDevice->m_bCDROM)
+   {
+diff --git a/xbmc/storage/MediaManager.cpp b/xbmc/storage/MediaManager.cpp
+index fe24924..5482ec5 100644
+--- a/xbmc/storage/MediaManager.cpp
++++ b/xbmc/storage/MediaManager.cpp
+@@ -62,7 +62,9 @@
+ #elif defined(TARGET_POSIX)
+ #include "linux/LinuxStorageProvider.h"
+ #include <sys/ioctl.h>
++#if !defined(TARGET_SOLARIS)
+ #include <linux/cdrom.h>
++#endif
+ #elif TARGET_WINDOWS
+ #include "windows/Win32StorageProvider.h"
+ #endif
+@@ -621,6 +623,8 @@ void CMediaManager::CloseTray(const char cDriveLetter)
+   // FIXME...
+ #elif defined(TARGET_FREEBSD)
+   // NYI
++#elif defined(TARGET_SOLARIS)
++ //NYI
+ #elif defined(TARGET_POSIX)
+   char* dvdDevice = CLibcdio::GetInstance()->GetDeviceFileName();
+   if (strlen(dvdDevice) != 0)   

@@ -1,0 +1,10 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=/usr/local/lib
+includedir=/usr/local/include
+
+Name: TinyXML
+Description: simple, small, C++ XML parser
+Version: 2.6.2
+Libs: -L${libdir} -ltinyxml
+Cflags: -I${includedir} -DTIXML_USE_STL=YES 

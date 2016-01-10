@@ -1,0 +1,13 @@
+diff --git a/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp b/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp
+index 6103cc7..589a516 100644
+--- a/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp
++++ b/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp
+@@ -30,7 +30,7 @@
+ #include <sys/ioctl.h>
+ #include <sys/fcntl.h>
+ 
+-#if defined(OSS4) || defined(TARGET_FREEBSD)
++#if defined(OSS4) || defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+   #include <sys/soundcard.h>
+ #else
+   #include <linux/soundcard.h>

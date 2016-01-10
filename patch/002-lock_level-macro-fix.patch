@@ -1,0 +1,153 @@
+diff --git a/xbmc/GUIPassword.cpp b/xbmc/GUIPassword.cpp
+index bec47d7..17afbf0 100644
+--- a/xbmc/GUIPassword.cpp
++++ b/xbmc/GUIPassword.cpp
+@@ -324,9 +324,9 @@ bool CGUIPassword::CheckLock(LockType btnType, const std::string& strPassword, i
+ 
+ bool CGUIPassword::CheckSettingLevelLock(const SettingLevel& level, bool enforce /*=false*/)
+ {
+-  LOCK_LEVEL::SETTINGS_LOCK lockLevel = CProfilesManager::GetInstance().GetCurrentProfile().settingsLockLevel();
++  LOCK_LEVEL_::SETTINGS_LOCK lockLevel = CProfilesManager::GetInstance().GetCurrentProfile().settingsLockLevel();
+   
+-  if (lockLevel == LOCK_LEVEL::NONE)
++  if (lockLevel == LOCK_LEVEL_::NONE)
+     return true;
+   
+     //check if we are already in settings and in an level that needs unlocking
+@@ -337,7 +337,7 @@ bool CGUIPassword::CheckSettingLevelLock(const SettingLevel& level, bool enforce
+           windowID <= WINDOW_SETTINGS_MYPVR)))
+     return true; //Already unlocked
+   
+-  else if (lockLevel == LOCK_LEVEL::ALL)
++  else if (lockLevel == LOCK_LEVEL_::ALL)
+     return IsMasterLockUnlocked(true);
+   else if ((int)lockLevel-1 <= (short)level)
+   {
+diff --git a/xbmc/GUIPassword.h b/xbmc/GUIPassword.h
+index 8b8653f..3bf23fe 100644
+--- a/xbmc/GUIPassword.h
++++ b/xbmc/GUIPassword.h
+@@ -43,7 +43,7 @@ typedef enum
+   LOCK_MODE_EEPROM_PARENTAL    =  5
+ } LockType;
+ 
+-namespace LOCK_LEVEL {
++namespace LOCK_LEVEL_ {
+   /**
+    Specifies, what Settings levels are locked for the user
+    **/
+diff --git a/xbmc/profiles/Profile.cpp b/xbmc/profiles/Profile.cpp
+index 49af2a7..4d3fa9a 100644
+--- a/xbmc/profiles/Profile.cpp
++++ b/xbmc/profiles/Profile.cpp
+@@ -30,7 +30,7 @@ CProfile::CLock::CLock(LockType type, const std::string &password):
+   files = false;
+   video = false;
+   music = false;
+-  settings = LOCK_LEVEL::NONE;
++  settings = LOCK_LEVEL_::NONE;
+   addonManager = false;
+   mode = type;
+ }
+@@ -84,7 +84,7 @@ void CProfile::Load(const TiXmlNode *node, int nextIdProfile)
+   XMLUtils::GetBoolean(node, "lockaddonmanager", m_locks.addonManager);
+   int settings = m_locks.settings;
+   XMLUtils::GetInt(node, "locksettings", settings);
+-  m_locks.settings = (LOCK_LEVEL::SETTINGS_LOCK)settings;
++  m_locks.settings = (LOCK_LEVEL_::SETTINGS_LOCK)settings;
+   XMLUtils::GetBoolean(node, "lockfiles", m_locks.files);
+   XMLUtils::GetBoolean(node, "lockmusic", m_locks.music);
+   XMLUtils::GetBoolean(node, "lockvideo", m_locks.video);
+diff --git a/xbmc/profiles/Profile.h b/xbmc/profiles/Profile.h
+index 6cf7f89..d089280 100644
+--- a/xbmc/profiles/Profile.h
++++ b/xbmc/profiles/Profile.h
+@@ -40,7 +40,7 @@ public:
+     LockType mode;
+     std::string code;
+     bool addonManager;
+-    LOCK_LEVEL::SETTINGS_LOCK settings;
++    LOCK_LEVEL_::SETTINGS_LOCK settings;
+     bool music;
+     bool video;
+     bool files;
+@@ -69,9 +69,9 @@ public:
+   bool hasAddons() const { return m_bAddons; }
+   /**
+    \brief Returns wich settings levels are locked for the current profile
+-   \sa LOCK_LEVEL::SETTINGS_LOCK
++   \sa LOCK_LEVEL_::SETTINGS_LOCK
+    */
+-  LOCK_LEVEL::SETTINGS_LOCK settingsLockLevel() const { return m_locks.settings; }
++  LOCK_LEVEL_::SETTINGS_LOCK settingsLockLevel() const { return m_locks.settings; }
+   bool addonmanagerLocked() const { return m_locks.addonManager; }
+   bool musicLocked() const { return m_locks.music; }
+   bool videoLocked() const { return m_locks.video; }
+diff --git a/xbmc/profiles/dialogs/GUIDialogLockSettings.cpp b/xbmc/profiles/dialogs/GUIDialogLockSettings.cpp
+index 078ad75..6c099b0 100644
+--- a/xbmc/profiles/dialogs/GUIDialogLockSettings.cpp
++++ b/xbmc/profiles/dialogs/GUIDialogLockSettings.cpp
+@@ -140,7 +140,7 @@ void CGUIDialogLockSettings::OnSettingChanged(const CSetting *setting)
+   else if (settingId == SETTING_LOCK_FILEMANAGER)
+     m_locks.files = static_cast<const CSettingBool*>(setting)->GetValue();
+   else if (settingId == SETTING_LOCK_SETTINGS)
+-    m_locks.settings = static_cast<LOCK_LEVEL::SETTINGS_LOCK>(static_cast<const CSettingInt*>(setting)->GetValue());
++    m_locks.settings = static_cast<LOCK_LEVEL_::SETTINGS_LOCK>(static_cast<const CSettingInt*>(setting)->GetValue());
+   else if (settingId == SETTING_LOCK_ADDONMANAGER)
+     m_locks.addonManager = static_cast<const CSettingBool*>(setting)->GetValue();
+ 
+@@ -277,11 +277,11 @@ void CGUIDialogLockSettings::InitializeSettings()
+     AddToggle(groupDetails, SETTING_LOCK_FILEMANAGER, 20042, 0, m_locks.files);
+ 
+     StaticIntegerSettingOptions settingsLevelOptions;
+-    settingsLevelOptions.push_back(std::make_pair(106,    LOCK_LEVEL::NONE));
+-    settingsLevelOptions.push_back(std::make_pair(593,    LOCK_LEVEL::ALL));
+-    settingsLevelOptions.push_back(std::make_pair(10037,  LOCK_LEVEL::STANDARD));
+-    settingsLevelOptions.push_back(std::make_pair(10038,  LOCK_LEVEL::ADVANCED));
+-    settingsLevelOptions.push_back(std::make_pair(10039,  LOCK_LEVEL::EXPERT));
++    settingsLevelOptions.push_back(std::make_pair(106,    LOCK_LEVEL_::NONE));
++    settingsLevelOptions.push_back(std::make_pair(593,    LOCK_LEVEL_::ALL));
++    settingsLevelOptions.push_back(std::make_pair(10037,  LOCK_LEVEL_::STANDARD));
++    settingsLevelOptions.push_back(std::make_pair(10038,  LOCK_LEVEL_::ADVANCED));
++    settingsLevelOptions.push_back(std::make_pair(10039,  LOCK_LEVEL_::EXPERT));
+     AddSpinner(groupDetails, SETTING_LOCK_SETTINGS, 20043, 0, static_cast<int>(m_locks.settings), settingsLevelOptions);
+     
+     AddToggle(groupDetails, SETTING_LOCK_ADDONMANAGER, 24090, 0, m_locks.addonManager);
+diff --git a/xbmc/profiles/dialogs/GUIDialogProfileSettings.cpp b/xbmc/profiles/dialogs/GUIDialogProfileSettings.cpp
+index ab80d2e..4839511 100644
+--- a/xbmc/profiles/dialogs/GUIDialogProfileSettings.cpp
++++ b/xbmc/profiles/dialogs/GUIDialogProfileSettings.cpp
+@@ -83,7 +83,7 @@ bool CGUIDialogProfileSettings::ShowForProfile(unsigned int iProfile, bool first
+ 
+     bool bLock = CProfilesManager::GetInstance().GetMasterProfile().getLockMode() != LOCK_MODE_EVERYONE && !g_passwordManager.bMasterUser;
+     dialog->m_locks.addonManager = bLock;
+-    dialog->m_locks.settings = (bLock) ? LOCK_LEVEL::ALL : LOCK_LEVEL::NONE;
++    dialog->m_locks.settings = (bLock) ? LOCK_LEVEL_::ALL : LOCK_LEVEL_::NONE;
+     dialog->m_locks.files = bLock;
+ 
+     dialog->m_directory.clear();
+diff --git a/xbmc/settings/SettingConditions.cpp b/xbmc/settings/SettingConditions.cpp
+index ed62e42..93172a5 100644
+--- a/xbmc/settings/SettingConditions.cpp
++++ b/xbmc/settings/SettingConditions.cpp
+@@ -145,15 +145,15 @@ bool ProfileHasProgramsLocked(const std::string &condition, const std::string &v
+ 
+ bool ProfileHasSettingsLocked(const std::string &condition, const std::string &value, const CSetting *setting, void *data)
+ {
+-  LOCK_LEVEL::SETTINGS_LOCK slValue=LOCK_LEVEL::ALL;
++  LOCK_LEVEL_::SETTINGS_LOCK slValue=LOCK_LEVEL_::ALL;
+   if (StringUtils::EqualsNoCase(value, "none"))
+-    slValue = LOCK_LEVEL::NONE;
++    slValue = LOCK_LEVEL_::NONE;
+   else if (StringUtils::EqualsNoCase(value, "standard"))
+-    slValue = LOCK_LEVEL::STANDARD;
++    slValue = LOCK_LEVEL_::STANDARD;
+   else if (StringUtils::EqualsNoCase(value, "advanced"))
+-    slValue = LOCK_LEVEL::ADVANCED;
++    slValue = LOCK_LEVEL_::ADVANCED;
+   else if (StringUtils::EqualsNoCase(value, "expert"))
+-    slValue = LOCK_LEVEL::EXPERT;
++    slValue = LOCK_LEVEL_::EXPERT;
+   return slValue <= CProfilesManager::GetInstance().GetCurrentProfile().settingsLockLevel();
+ }
+ 

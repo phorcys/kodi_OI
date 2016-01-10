@@ -1,0 +1,49 @@
+diff --git a/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdNetwork.cpp b/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdNetwork.cpp
+index 4b79915..eb7eabe 100644
+--- a/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdNetwork.cpp
++++ b/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdNetwork.cpp
+@@ -63,6 +63,8 @@
+ NPT_Result
+ NPT_NetworkInterface::GetNetworkInterfaces(NPT_List<NPT_NetworkInterface*>& interfaces)
+ {
++#if !defined(TARGET_SOLARIS)
++
+     int net = socket(AF_INET, SOCK_DGRAM, 0);
+     
+     // Try to get the config until we have enough memory for it
+@@ -278,6 +280,6 @@ NPT_NetworkInterface::GetNetworkInterfaces(NPT_List<NPT_NetworkInterface*>& inte
+     // free resources
+     delete[] buffer;
+     close(net);
+-    
++#endif 
+     return NPT_SUCCESS;
+ }
+diff --git a/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdSockets.cpp b/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdSockets.cpp
+index 6174ff9..6b52216 100644
+--- a/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdSockets.cpp
++++ b/lib/libUPnP/Neptune/Source/System/Bsd/NptBsdSockets.cpp
+@@ -93,7 +93,9 @@
+ #include <signal.h>
+ 
+ #endif 
+-
++#if defined(TARGET_SOLARIS)
++#include <sys/filio.h>
++#endif
+ 
+ #include "NptConfig.h"
+ #include "NptTypes.h"
+diff --git a/lib/libUPnP/Neptune/Source/System/Posix/NptPosixTime.cpp b/lib/libUPnP/Neptune/Source/System/Posix/NptPosixTime.cpp
+index 6f9500f..ba11ef1 100644
+--- a/lib/libUPnP/Neptune/Source/System/Posix/NptPosixTime.cpp
++++ b/lib/libUPnP/Neptune/Source/System/Posix/NptPosixTime.cpp
+@@ -76,7 +76,7 @@ NPT_DateTime::GetLocalTimeZone()
+ 
+     localtime_r(&epoch, &tm_local);
+ 
+-#if defined(__CYGWIN__)
++#if defined(__CYGWIN__) || defined(TARGET_SOLARIS)
+      return (NPT_Int32)timezone/60;
+ #else
+      return (NPT_Int32)tm_local.tm_gmtoff/60;
