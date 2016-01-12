@@ -1,0 +1,18 @@
+diff --git a/xbmc/utils/CharsetConverter.cpp b/xbmc/utils/CharsetConverter.cpp
+index 6fa02f9..330ccf0 100644
+--- a/xbmc/utils/CharsetConverter.cpp
++++ b/xbmc/utils/CharsetConverter.cpp
+@@ -66,6 +66,13 @@
+   #define UTF32_CHARSET "UTF-32" ENDIAN_SUFFIX
+   #define UTF8_SOURCE "UTF-8"
+   #define WCHAR_CHARSET UTF32_CHARSET 
++#elif defined(TARGET_SOLARIS)
++  #define WCHAR_IS_UCS_4 1
++  #define UTF16_CHARSET "UTF-16" ENDIAN_SUFFIX
++  #define UTF32_CHARSET "UTF-32" ENDIAN_SUFFIX
++  #define UTF8_SOURCE "UTF-8"
++  #define WCHAR_CHARSET UTF32_CHARSET 
++
+ #else
+   #define UTF16_CHARSET "UTF-16" ENDIAN_SUFFIX
+   #define UTF32_CHARSET "UTF-32" ENDIAN_SUFFIX

@@ -1,0 +1,36 @@
+diff --git a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp
+index cf8a060..9d18ea6 100644
+--- a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp
++++ b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.cpp
+@@ -24,6 +24,10 @@
+ 
+ CEmuFileWrapper g_emuFileWrapper;
+ 
++// there is no _file  in FILE struct  under OpenIndiana ,so use _cnt as  a  place holder 
++#if  defined(TARGET_SOLARIS)
++#define _file _cnt
++#endif
+ CEmuFileWrapper::CEmuFileWrapper()
+ {
+   // since we always use dlls we might just initialize it directly
+@@ -31,6 +35,7 @@ CEmuFileWrapper::CEmuFileWrapper()
+   {
+     memset(&m_files[i], 0, sizeof(EmuFileObject));
+     m_files[i].used = false;
++
+     m_files[i].file_emu._file = -1;
+   }
+ }
+diff --git a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h
+index 3d79c7a..b8146fd 100644
+--- a/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h
++++ b/xbmc/cores/DllLoader/exports/util/EmuFileWrapper.h
+@@ -27,7 +27,7 @@
+ #include "system.h"
+ #include "threads/CriticalSection.h"
+ 
+-#if defined(TARGET_POSIX) && !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD) && !defined(TARGET_ANDROID) && !defined(__UCLIBC__)
++#if defined(TARGET_POSIX) && !defined(TARGET_DARWIN) && !defined(TARGET_FREEBSD) && !defined(TARGET_ANDROID) && !defined(__UCLIBC__)&&   !defined(TARGET_SOLARIS)
+ #define _file _fileno
+ #elif defined(__UCLIBC__)
+ #define _file __filedes
