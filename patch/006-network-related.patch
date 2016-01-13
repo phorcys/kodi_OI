@@ -14,7 +14,7 @@ index dd2a899..73293af 100644
  
  #include <arpa/inet.h>
 diff --git a/xbmc/network/linux/NetworkLinux.cpp b/xbmc/network/linux/NetworkLinux.cpp
-index 1230c61..8ac299b 100644
+index 1230c61..11ff290 100644
 --- a/xbmc/network/linux/NetworkLinux.cpp
 +++ b/xbmc/network/linux/NetworkLinux.cpp
 @@ -57,6 +57,15 @@
@@ -42,7 +42,15 @@ index 1230c61..8ac299b 100644
    return false;
  #else
    struct iwreq wrq;
-@@ -357,7 +366,7 @@ CNetworkInterface* CNetworkLinux::GetFirstConnectedInterface(void)
+@@ -262,6 +271,7 @@ std::string CNetworkInterfaceLinux::GetCurrentDefaultGateway(void)
+    if (!fp)
+    {
+      // TBD: Error
++        CLog::Log(LOGWARNING, "Unable to determine gateway from /proc/net/route");
+      return result;
+    }
+ 
+@@ -357,7 +367,7 @@ CNetworkInterface* CNetworkLinux::GetFirstConnectedInterface(void)
  void CNetworkLinux::GetMacAddress(const std::string& interfaceName, char rawMac[6])
  {
    memset(rawMac, 0, 6);
@@ -51,7 +59,25 @@ index 1230c61..8ac299b 100644
  
  #if !defined(IFT_ETHER)
  #define IFT_ETHER 0x6/* Ethernet CSMACD */
-@@ -566,7 +575,7 @@ bool CNetworkLinux::PingHost(unsigned long remote_ip, unsigned int timeout_ms)
+@@ -409,7 +419,7 @@ void CNetworkLinux::queryInterfaceList()
+   char macAddrRaw[6];
+   m_interfaces.clear();
+ 
+-#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD)
++#if defined(TARGET_DARWIN) || defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+ 
+    // Query the list of interfaces.
+    struct ifaddrs *list;
+@@ -545,7 +555,7 @@ bool CNetworkLinux::PingHost(unsigned long remote_ip, unsigned int timeout_ms)
+ 
+ #if defined (TARGET_DARWIN_IOS) // no timeout option available
+   sprintf(cmd_line, "ping -c 1 %s", inet_ntoa(host_ip));
+-#elif defined (TARGET_DARWIN) || defined (TARGET_FREEBSD)
++#elif defined (TARGET_DARWIN) || defined (TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+   sprintf(cmd_line, "ping -c 1 -t %d %s", timeout_ms / 1000 + (timeout_ms % 1000) != 0, inet_ntoa(host_ip));
+ #else
+   sprintf(cmd_line, "ping -c 1 -w %d %s", timeout_ms / 1000 + (timeout_ms % 1000) != 0, inet_ntoa(host_ip));
+@@ -566,7 +576,7 @@ bool CNetworkLinux::PingHost(unsigned long remote_ip, unsigned int timeout_ms)
    return result == 0;
  }
  
@@ -60,7 +86,7 @@ index 1230c61..8ac299b 100644
  bool CNetworkInterfaceLinux::GetHostMacAddress(unsigned long host_ip, std::string& mac)
  {
    bool ret = false;
-@@ -630,10 +639,10 @@ bool CNetworkInterfaceLinux::GetHostMacAddress(unsigned long host_ip, std::strin
+@@ -630,10 +640,10 @@ bool CNetworkInterfaceLinux::GetHostMacAddress(unsigned long host_ip, std::strin
  
    sin = (struct sockaddr_in *) &areq.arp_ha;
    sin->sin_family = ARPHRD_ETHER;
@@ -73,4 +99,3 @@ index 1230c61..8ac299b 100644
    int result = ioctl (m_network->GetSocket(), SIOCGARP, (caddr_t) &areq);
  
    if (result != 0)
-
