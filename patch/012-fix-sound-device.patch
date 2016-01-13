@@ -1,0 +1,52 @@
+diff -ur xbmc1/xbmc/cores/AudioEngine/AESinkFactory.cpp xbmc/xbmc/cores/AudioEngine/AESinkFactory.cpp
+--- xbmc1/xbmc/cores/AudioEngine/AESinkFactory.cpp      2016-01-14 03:28:05.291359779 +0800
++++ xbmc/xbmc/cores/AudioEngine/AESinkFactory.cpp       2016-01-14 02:18:06.112147310 +0800
+@@ -32,7 +32,7 @@
+   #include "Sinks/AESinkDARWINIOS.h"
+ #elif defined(TARGET_DARWIN_OSX)
+   #include "Sinks/AESinkDARWINOSX.h"
+-#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
++#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+   #if defined(HAS_ALSA)
+     #include "Sinks/AESinkALSA.h"
+   #endif
+@@ -71,7 +71,7 @@
+         driver == "DARWINIOS"  ||
+ #elif defined(TARGET_DARWIN_OSX)
+         driver == "DARWINOSX"  ||
+-#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
++#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+   #if defined(HAS_ALSA)
+         driver == "ALSA"        ||
+   #endif
+@@ -116,7 +116,7 @@
+     sink = new CAESinkDARWINIOS();
+ #elif defined(TARGET_DARWIN_OSX)
+     sink = new CAESinkDARWINOSX();
+-#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
++#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+  #if defined(HAS_PULSEAUDIO)
+     if (driver == "PULSE")
+       sink = new CAESinkPULSE();
+@@ -225,7 +225,7 @@
+   if(!info.m_deviceInfoList.empty())
+     list.push_back(info);
+ 
+-#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD)
++#elif defined(TARGET_LINUX) || defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+   // check if user wants us to do something specific
+   if (getenv("AE_SINK"))
+   {
+diff -ur xbmc1/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp xbmc/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp
+--- xbmc1/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp    2016-01-14 03:30:27.965841045 +0800
++++ xbmc/xbmc/cores/AudioEngine/Sinks/AESinkOSS.cpp     2016-01-14 02:18:53.318709120 +0800
+@@ -251,7 +251,7 @@
+   if (!found)
+     CLog::Log(LOGWARNING, "CAESinkOSS::Initialize - Failed to access the number of channels required, falling back");
+ 
+-#if defined(TARGET_FREEBSD)
++#if defined(TARGET_FREEBSD) || defined(TARGET_SOLARIS)
+   /* fix hdmi 8 channels order */
+   if ((oss_fmt != AFMT_AC3) && 8 == oss_ch)
+   {
+

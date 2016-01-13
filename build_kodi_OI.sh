@@ -17,6 +17,9 @@ patch -p1 < ../patch/008-libupnp-temp-fix.patch
 patch -p1 < ../patch/009-fix-solaris-FILE-no__file.patch
 patch -p1 < ../patch/099-need-fix-disabled.patch
 patch -p1 < ../patch/010-fix-charset-iconv.patch
+patch -p1 < ../patch/011-fix-dvdcodec-nullsetting.patch
+patch -p1 < ../patch/012-fix-sound-device.patch
+patch -p1 < ../patch/013-fix-sys-info.patch
 else
 
 	cd xbmc

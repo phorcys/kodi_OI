@@ -1,0 +1,67 @@
+diff -ur xbmc1/xbmc/utils/SystemInfo.cpp xbmc/xbmc/utils/SystemInfo.cpp
+--- xbmc1/xbmc/utils/SystemInfo.cpp     2016-01-14 03:28:05.554237903 +0800
++++ xbmc/xbmc/utils/SystemInfo.cpp      2016-01-14 03:22:17.113004812 +0800
+@@ -71,8 +71,11 @@
+ #include <sys/param.h>
+ #elif defined(TARGET_LINUX)
+ #include <linux/version.h>
++#elif defined(TARGET_SOLARIS)
++#include <sys/utsname.h>
+ #endif
+ 
++
+ /* Expand macro before stringify */
+ #define STR_MACRO(x) #x
+ #define XSTR_MACRO(x) STR_MACRO(x)
+@@ -549,6 +552,10 @@
+     OSVERSIONINFOEXW osvi;
+     if (sysGetVersionExWByRef(osvi) && osvi.dwPlatformId == VER_PLATFORM_WIN32_NT)
+       kernelName = "Windows NT";
++#elif defined(TARGET_SOLARIS)
++    struct utsname un;
++    if (uname(&un) >= 0)
++      kernelName.assign(un.sysname);
+ #elif defined(TARGET_POSIX)
+     struct utsname un;
+     if (uname(&un) == 0)
+@@ -575,6 +582,10 @@
+   OSVERSIONINFOEXW osvi;
+   if (sysGetVersionExWByRef(osvi))
+     kernelVersionFull = StringUtils::Format("%d.%d", osvi.dwMajorVersion, osvi.dwMinorVersion);
++#elif defined(TARGET_SOLARIS)
++    struct utsname un;
++    if (uname(&un) >= 0)
++      kernelVersionFull = StringUtils::Format("%s %s %s %s %s",un.sysname,un.nodename,un.release, un.version,un.machine);
+ #elif defined(TARGET_POSIX)
+   struct utsname un;
+   if (uname(&un) == 0)
+@@ -622,6 +633,8 @@
+       osName = getValueFromLsb_release(lsb_rel_distributor);
+     if (osName.empty())
+       osName = getValueFromOs_release("ID");
++#elif defined(TARGET_SOLARIS)
++    osName = "Solaris";
+ #endif // defined(TARGET_LINUX)
+ 
+     if (osName.empty())
+@@ -665,6 +678,10 @@
+   osVersion = getValueFromOs_release("VERSION_ID");
+   if (osVersion.empty())
+     osVersion = getValueFromLsb_release(lsb_rel_release);
++#elif defined(TARGET_SOLARIS)
++    struct utsname un;
++    if (uname(&un) >= 0)
++      osVersion.assign(un.version);
+ #endif // defined(TARGET_LINUX)
+ 
+   if (osVersion.empty())
+@@ -737,7 +754,7 @@
+   }
+   else
+     osNameVer.append(" unknown");
+-#elif defined(TARGET_FREEBSD) || defined(TARGET_DARWIN_IOS) || defined(TARGET_DARWIN_OSX)
++#elif defined(TARGET_FREEBSD) || defined(TARGET_DARWIN_IOS) || defined(TARGET_DARWIN_OSX) || defined(TARGET_SOLARIS)
+   osNameVer = GetOsName() + " " + GetOsVersion();
+ #elif defined(TARGET_ANDROID)
+   osNameVer = GetOsName() + " " + GetOsVersion() + " API level " +   StringUtils::Format("%d", CJNIBuild::SDK_INT);
+
